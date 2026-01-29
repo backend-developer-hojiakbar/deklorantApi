@@ -166,50 +166,92 @@ def perform_risk_analysis(data):
 
 def search_hs_codes_semantic(query):
     """
-    Search HS codes semantically (mock implementation)
-    In a real implementation, this would use AI/Gemini API
+    Search HS codes semantically
+    First search in database, then fallback to AI if no results found
     """
-    # This is a mock implementation - in real app, this would call an AI service
-    # For now, return some example results based on the query
+    from .models import HsCode
+    from django.db.models import Q
     
-    # Mock HS codes database (in real app, this would be from actual DB or API)
-    mock_hs_codes = {
-        'laptop': [
-            {'code': '8471301000', 'description': 'Personal computers', 'description_ru': 'Персональные компьютеры', 'confidence': 95, 'reasoning': 'Standard classification for laptops and personal computers', 'sources': []},
-            {'code': '8471309000', 'description': 'Other portable computers', 'description_ru': 'Другие портативные компьютеры', 'confidence': 85, 'reasoning': 'Alternative classification for portable computing devices', 'sources': []}
-        ],
-        'mobile phone': [
-            {'code': '8517120000', 'description': 'Mobile telephones', 'description_ru': 'Мобильные телефоны', 'confidence': 98, 'reasoning': 'Standard classification for mobile phones', 'sources': []},
-            {'code': '8517629500', 'description': 'Smartphones', 'description_ru': 'Смартфоны', 'confidence': 92, 'reasoning': 'Smartphone classification', 'sources': []}
-        ],
-        'car': [
-            {'code': '8703231981', 'description': 'Cars with spark-ignition internal combustion piston engine', 'description_ru': 'Легковые автомобили с поршневым двигателем внутреннего сгорания', 'confidence': 90, 'reasoning': 'Standard classification for gasoline cars', 'sources': []},
-            {'code': '8703801000', 'description': 'Electric cars', 'description_ru': 'Электромобили', 'confidence': 88, 'reasoning': 'Electric vehicle classification', 'sources': []}
-        ],
-        'textile': [
-            {'code': '6101300000', 'description': 'T-shirts', 'description_ru': 'Футболки', 'confidence': 80, 'reasoning': 'Cotton t-shirts classification', 'sources': []},
-            {'code': '6203420000', 'description': 'Trousers', 'description_ru': 'Брюки', 'confidence': 75, 'reasoning': 'Cotton trousers classification', 'sources': []}
-        ]
-    }
-    
-    # Find closest match based on query
+    # First, try to search in database
     query_lower = query.lower()
-    results = []
+    db_results = []
     
-    for keyword, codes in mock_hs_codes.items():
-        if keyword in query_lower or query_lower in keyword:
-            results.extend(codes)
-            break
+    # Search by description, keywords, and code
+    hs_codes = HsCode.objects.filter(
+        Q(description_uz__icontains=query_lower) |
+        Q(description_ru__icontains=query_lower) |
+        Q(code__icontains=query) |
+        Q(required_certs__icontains=query_lower)
+    )[:10]
     
-    # If no direct match, return some general results
-    if not results:
-        results = [
+    for hs_code in hs_codes:
+        db_results.append({
+            'code': hs_code.code,
+            'description': hs_code.description_uz,
+            'description_ru': hs_code.description_ru or hs_code.description_uz,
+            'confidence': 95.0,  # High confidence for DB matches
+            'reasoning': f'Matched from database: {hs_code.code}',
+            'sources': hs_code.sources or []
+        })
+    
+    # If we found results in database, return them
+    if db_results:
+        return db_results
+    
+    # If no database results, use AI/Gemini API as fallback
+    try:
+        # Import here to avoid circular imports
+        import os
+        from google import genai
+        
+        # Check if Gemini API key is available
+        api_key = os.environ.get('GEMINI_API_KEY')
+        if not api_key:
+            # Return mock results if no API key
+            return [
+                {'code': '9999999999', 'description': 'General merchandise', 'description_ru': 'Общие товары', 'confidence': 50, 'reasoning': 'Generic classification when specific code not found', 'sources': []},
+                {'code': '8471301000', 'description': 'Electronic equipment', 'description_ru': 'Электронное оборудование', 'confidence': 45, 'reasoning': 'Generic electronic classification', 'sources': []}
+            ]
+        
+        # Call Gemini API
+        client = genai.GenerativeModel('gemini-3-pro-preview')
+        response = client.generate_content(
+            f'Rol: Butunjahon Bojxona Eksperti. Vazifa: "{query}" uchun eng aniq 10 xonali TIF TN kodlarini topish. '
+            f'Internetdan Butunjahon Bojxona Tashkiloti (WCO), Yevropa Ittifoqi TARIC bazasi va O\'zbekiston Bojxona stavkalarini tekshiring. '
+            f'Natijani JSON formatida qaytaring: [{{code, description, descriptionRu, confidence, reasoning}}].'
+        )
+        
+        # Parse response
+        import json
+        raw_text = response.text or "[]"
+        json_start = raw_text.find('[')
+        json_end = raw_text.rfind(']') + 1
+        if json_start != -1 and json_end > 0:
+            raw_text = raw_text[json_start:json_end]
+        
+        ai_results = json.loads(raw_text)
+        
+        # Format results
+        formatted_results = []
+        for r in ai_results[:10]:  # Limit to 10 results
+            formatted_results.append({
+                'code': r.get('code', ''),
+                'description': r.get('description', 'Tovar tavsifi'),
+                'description_ru': r.get('descriptionRu', r.get('description', 'Описание товара')),
+                'confidence': float(r.get('confidence', 70)),
+                'reasoning': r.get('reasoning', 'AI tahlili'),
+                'sources': r.get('sources', [])
+            })
+        
+        return formatted_results
+        
+    except Exception as e:
+        print(f"AI search error: {e}")
+        # Return fallback results if AI fails
+        return [
             {'code': '9999999999', 'description': 'General merchandise', 'description_ru': 'Общие товары', 'confidence': 50, 'reasoning': 'Generic classification when specific code not found', 'sources': []},
             {'code': '8471301000', 'description': 'Electronic equipment', 'description_ru': 'Электронное оборудование', 'confidence': 45, 'reasoning': 'Generic electronic classification', 'sources': []}
         ]
-    
-    # Limit to top 10 results
-    return results[:10]
 
 
 def get_hs_code_details(code):

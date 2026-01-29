@@ -403,7 +403,7 @@ def perform_risk_analysis_api(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def search_hs_codes_api(request):
     """
     Search HS codes semantically using AI

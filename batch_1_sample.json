@@ -1,0 +1,62 @@
+[
+  {
+    "code": "0101100000",
+    "description_uz": "Boshqa naslli otlar",
+    "description_ru": "Прочие племенные лошади",
+    "category": "Tirik hayvonlar",
+    "subcategory": "Otlar",
+    "keywords": "ot, naslli, plemennye, loшadi",
+    "duty_rate": 0.0,
+    "vat_rate": 12.0,
+    "excise_rate": 0.0,
+    "required_certificates": "[\"Veterinariya sertifikati\"]"
+  },
+  {
+    "code": "0101900000",
+    "description_uz": "Boshqa otlar",
+    "description_ru": "Прочие лошади",
+    "category": "Tirik hayvonlar",
+    "subcategory": "Otlar",
+    "keywords": "ot, drugie, loshadi",
+    "duty_rate": 5.0,
+    "vat_rate": 12.0,
+    "excise_rate": 0.0,
+    "required_certificates": "[\"Veterinariya sertifikati\"]"
+  },
+  {
+    "code": "0102100000",
+    "description_uz": "Boshqa qoramollar",
+    "description_ru": "Прочие крупный рогатый скот",
+    "category": "Tirik hayvonlar",
+    "subcategory": "Qoramol",
+    "keywords": "qoramol, drugie, krupnyy rogatyy skot",
+    "duty_rate": 5.0,
+    "vat_rate": 12.0,
+    "excise_rate": 0.0,
+    "required_certificates": "[\"Veterinariya sertifikati\"]"
+  },
+  {
+    "code": "0102290000",
+    "description_uz": "Boshqa qoramollar (so'yiladigan)",
+    "description_ru": "Прочие крупный рогатый скот (убойные)",
+    "category": "Tirik hayvonlar",
+    "subcategory": "Qoramol",
+    "keywords": "qoramol, uboynye, krupnyy rogatyy skot",
+    "duty_rate": 5.0,
+    "vat_rate": 12.0,
+    "excise_rate": 0.0,
+    "required_certificates": "[\"Veterinariya sertifikati\"]"
+  },
+  {
+    "code": "0102310000",
+    "description_uz": "Qizil qoramollar",
+    "description_ru": "Красные крупный рогатый скот",
+    "category": "Tirik hayvonlar",
+    "subcategory": "Qoramol",
+    "keywords": "qizil qoramol, krasnyy, krupnyy rogatyy skot",
+    "duty_rate": 0.0,
+    "vat_rate": 12.0,
+    "excise_rate": 0.0,
+    "required_certificates": "[\"Veterinariya sertifikati\"]"
+  }
+]
